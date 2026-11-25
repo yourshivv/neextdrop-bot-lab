@@ -64,7 +64,7 @@
       "bot_id": "breakout4h",
       "title": "Breakout 4h",
       "status": "on paper since 17 Oct 2026",
-      "summary": "Enters when price breaks a 20-candle high or low on the 4-hour chart, long and short. It skips every trade when the market mood is weak, and skips longs when the mood is hot. Fixed target at 6R, 10-day time limit. This is the only bot that was above zero over the full 3 years.",
+      "summary": "Enters when price breaks a 20-candle high or low on the 4-hour chart, long and short. It skips every trade when the market mood is weak, and skips longs when the mood is hot. Fixed target at 6R, 10-day time limit. Since 30 Oct 2026 the live bot also moves its stop to break-even once a trade is up 2R. This is the only bot that was above zero over the full 3 years.",
       "tables": [
         {
           "caption": "1. Does the market mood filter help? Breakout 4h per trade, by mood (trades in brackets)",
@@ -229,7 +229,7 @@
       "caveats": [
         "The market mood rule was found on these same 3 years, so it is in-sample. The stable thresholds help, but only forward testing can settle it.",
         "A later test (30 Oct) on a rebuilt engine gave smaller totals (Y3 +104R instead of +190R for the same rules), with the same direction. Compare rows only within one table.",
-        "Moving the stop to break-even after +2R beat the plain rules in all three years in that later test, but the strict best settings did not beat the plain rules in Y3, so the evidence is moderate, not strong."
+        "Moving the stop to break-even after +2R beat the plain rules in all three years in that later test (Y1 +160R / Y2 +152R / Y3 +123R versus +150R / +131R / +104R), but the strict best settings did not beat the plain rules in Y3, so the evidence is moderate, not strong. It has been live on paper since 30 Oct 2026."
       ]
     },
     {
@@ -237,7 +237,7 @@
       "bot_id": "pullback4h",
       "title": "Pullback 4h",
       "status": "on paper",
-      "summary": "In a daily uptrend or downtrend, waits for the 4-hour price to dip back to its 20-period average (EMA20) and enters with a limit order. Uses the same market mood filter as Breakout 4h and a 4R target. It wins only about 3 trades in 10 and relies on big winners.",
+      "summary": "In a daily uptrend or downtrend, waits for the 4-hour price to dip back to its 20-period average (EMA20) and enters with a limit order. Uses the same market mood filter as Breakout 4h and a 4R target. Since 30 Oct 2026 the stop moves to break-even once a trade is up 2R. It wins only about 3 trades in 10 and relies on big winners.",
       "tables": [
         {
           "caption": "1. Six pullback ideas, same filter, per trade over 3 years (124 coins, no slot limit)",
@@ -346,7 +346,8 @@
       "caveats": [
         "Drawdowns are deep for the profit (-117R). Compounding is not safe here: 6R at 2% risk per trade fell 95% at its worst.",
         "Monthly results correlate 0.39 with Breakout 4h, so running both gives only partial diversification. Correlation measures how much two results move together: 1 is lockstep, 0 is independent.",
-        "Only 28% to 30% of trades win. Long losing runs are normal for this style."
+        "Only 28% to 30% of trades win. Long losing runs are normal for this style.",
+        "Break-even after +2R, same later test: Y1 +89R / Y2 +184R / Y3 +144R versus +59R / +180R / +132R for the plain rules, with a smaller worst drawdown (-48R versus -56R). Live on paper since 30 Oct 2026."
       ]
     },
     {
