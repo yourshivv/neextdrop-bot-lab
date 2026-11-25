@@ -1,0 +1,17 @@
+# Never commit real settings, databases or keys
+results_config.json
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+.env
+.env.*
+*.key
+*.pem
+id_*
+__pycache__/
+*.pyc
+site/
+demo_db/
+edge/
+*.log

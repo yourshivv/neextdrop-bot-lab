@@ -1,0 +1,44 @@
+{
+  "site_title": "Neextdrop Bot Lab: paper-trading results",
+  "tagline": "Strategies and research built on Freqtrade. Paper money only, shared to get feedback.",
+  "min_trades_for_judgement": 50,
+  "show_absolute_usdt": true,
+  "export_csv": true,
+  "credit": "Built on Freqtrade (GPL-3.0). Strategies, filters and testing method are the author's own.",
+  "links": {
+    "X": "https://x.com/Neextdrop",
+    "GitHub": ""
+  },
+  "notes": [
+    "Fills are simulated on exchange price data. Real fills would include slippage and delays.",
+    "Bot rules were changed several times during testing. Each bot below counts trades only from its current rules, where a start date is shown.",
+    "Open positions are excluded until they close."
+  ],
+  "bots": [
+    {
+      "id": "breakout4h",
+      "name": "Breakout 4h",
+      "db": "/path/to/user_data/db/breakout4h.sqlite",
+      "status": "active",
+      "start_balance": 210,
+      "since": "2026-10-17",
+      "description": "Buys 20-candle breakouts on the 4-hour chart with a fixed target."
+    },
+    {
+      "id": "gold-breakout",
+      "name": "Gold Breakout",
+      "db": "/path/to/user_data/db/gold_breakout.sqlite",
+      "status": "active",
+      "start_balance": 210,
+      "description": "The same breakout rules applied to gold, long only."
+    },
+    {
+      "id": "example-failed-bot",
+      "name": "Add every bot here, including failed ones",
+      "db": "/path/to/user_data/db/another_bot.sqlite",
+      "status": "retired",
+      "start_balance": 210,
+      "description": "Keep failures on the page. It is what makes the rest believable."
+    }
+  ]
+}
