@@ -218,8 +218,29 @@ def compute_stats(trades, start_balance, min_trades):
         row["pnl"] += t["pabs"]
     s["reasons"] = sorted(reasons.items(), key=lambda kv: -kv[1]["n"])
 
+    s["clusters"] = find_clusters(trades, s["total_pnl"])
     s["verdict"] = verdict(s)
     return s
+
+
+def find_clusters(trades, total_pnl, min_size=4, top=2):
+    """Groups of trades that closed within the same clock hour. One market move or one
+    manual action can close many trades at once, so these are not independent results."""
+    groups = {}
+    for t in trades:
+        key = t["close"].strftime("%Y-%m-%d %H:00")
+        groups.setdefault(key, []).append(t)
+    found = []
+    for key, g in groups.items():
+        if len(g) >= min_size:
+            pnl = sum(t["pabs"] for t in g)
+            reasons = Counter(t["reason"] for t in g)
+            found.append({"hour": key, "n": len(g), "pnl": pnl,
+                          "reason": reasons.most_common(1)[0][0],
+                          "rest_n": len(trades) - len(g),
+                          "rest_pnl": total_pnl - pnl})
+    found.sort(key=lambda c: -abs(c["pnl"]))
+    return found[:top]
 
 
 def verdict(s):
@@ -362,6 +383,8 @@ GLOSSARY = [
     ("R multiple", "Profit measured in units of the risk taken. +2R means the trade made twice what it risked. Here R is derived from each trade's initial stop distance and is shown only when most trades have one."),
     ("Profit factor", "Total money won divided by total money lost. Above 1 means profit, below 1 means loss."),
     ("Max drawdown", "Biggest fall from a previous high point of the account. It shows how bad the worst stretch felt."),
+    ("Exit reasons", "Shown as the bot logs them. stop_loss, target and time_stop are the strategy's own rules. force_exit means the position was closed by a command from outside the rules, not by the strategy."),
+    ("Clustering", "Trades that close in the same hour usually come from one market move or one action. They are shown as a group, because ten trades closing together are closer to one bet than ten."),
     ("Sample size", "With few trades, luck dominates. Bots below the trade threshold are flagged as too early to judge."),
 ]
 
@@ -406,6 +429,12 @@ def bot_section(bot, s, open_count, trades, cfg):
         stat_card("Period", "%s to %s" % (day(s["first_close"]), day(s["last_close"]))),
     ]
     out.append('<div class="grid-stats">%s</div>' % "".join(cards))
+    for c in s.get("clusters") or []:
+        out.append('<p class="banner"><strong>Clustering check.</strong> %d trades closed within the same hour (%s UTC, exit: %s) '
+                   'and together made %s USDT. Without this group the bot has %d trades and %s USDT in total. '
+                   'Trades that close together come from one market move or one action, so they count as closer to one bet than %d.</p>' % (
+                       c["n"], esc(c["hour"]), esc(c["reason"]), num(c["pnl"], 2, sign=True), c["rest_n"],
+                       num(c["rest_pnl"], 2, sign=True), c["n"]))
 
     out.append("<h3>Account value (closed trades)</h3>")
     out.append(svg_chart(s["equity"], "equity", baseline=s["start_balance"] if s["start_balance"] > 0 else None))
