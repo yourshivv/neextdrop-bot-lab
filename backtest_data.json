@@ -165,6 +165,7 @@
     "Selection bias: the pullback family was picked from about six ideas and several targets, and these two bots from a larger set. The best of many tries always looks better than it is.",
     "Trades are not independent: one market move can trigger dozens of similar trades. 12,855 trades is not 12,855 separate pieces of evidence.",
     "A weak market for altcoins: three years of mostly falling altcoins is one market regime. Rising-market behaviour is under-tested.",
+    "Desk safety rule: the live desk also closes all open trades when Bitcoin falls below a set level (shown as force_exit on the live page). The backtests replay each strategy's own entry and exit rules and were not built to include this rule, so live results can differ because of it.",
     "Simulated fills: no order book depth, no latency, stop-first assumption. Live fills will be worse.",
     "Forward test: live paper trading started on 17 Oct 2026, after the backtest data ends (28 Sep 2026). It is the first honest out-of-sample test, but it has few trades so far."
   ],

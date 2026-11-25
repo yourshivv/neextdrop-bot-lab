@@ -383,7 +383,7 @@ GLOSSARY = [
     ("R multiple", "Profit measured in units of the risk taken. +2R means the trade made twice what it risked. Here R is derived from each trade's initial stop distance and is shown only when most trades have one."),
     ("Profit factor", "Total money won divided by total money lost. Above 1 means profit, below 1 means loss."),
     ("Max drawdown", "Biggest fall from a previous high point of the account. It shows how bad the worst stretch felt."),
-    ("Exit reasons", "Shown as the bot logs them. stop_loss, target and time_stop are the strategy's own rules. force_exit means the position was closed by a command from outside the rules, not by the strategy."),
+    ("Exit reasons", "Shown as the bot logs them. stop_loss, target and time_stop are the strategy's own rules. force_exit means the trading desk's own safety rule closed the position (for example when Bitcoin falls below a set level), not the strategy's stop or target. It acts on every open trade at once."),
     ("Clustering", "Trades that close in the same hour usually come from one market move or one action. They are shown as a group, because ten trades closing together are closer to one bet than ten."),
     ("Sample size", "With few trades, luck dominates. Bots below the trade threshold are flagged as too early to judge."),
 ]
