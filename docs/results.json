@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-11-25 13:42",
+  "generated_utc": "2026-11-25 13:47",
   "demo": false,
   "bots": {
     "breakout4h": {
@@ -26,6 +26,24 @@
       "worst": -0.20813755752185134,
       "first_close": "2026-10-21T22:07:49.707000",
       "last_close": "2026-11-15T09:04:25.951000",
+      "clusters": [
+        {
+          "hour": "2026-11-15 09:00",
+          "n": 9,
+          "pnl": 76.64751877,
+          "reason": "force_exit",
+          "rest_n": 16,
+          "rest_pnl": -10.58336525
+        },
+        {
+          "hour": "2026-10-22 05:00",
+          "n": 9,
+          "pnl": -21.07817666,
+          "reason": "streak_guard",
+          "rest_n": 16,
+          "rest_pnl": 87.14233018
+        }
+      ],
       "verdict": [
         "early",
         "Too early to judge (25 of 50 trades)"
@@ -58,6 +76,7 @@
       "worst": -0.11958767794846159,
       "first_close": "2026-10-21T19:02:54.395000",
       "last_close": "2026-11-15T00:01:45.097000",
+      "clusters": [],
       "verdict": [
         "early",
         "Too early to judge (34 of 50 trades)"
