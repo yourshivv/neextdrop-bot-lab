@@ -1,0 +1,177 @@
+{
+  "title": "Backtest research: 3 years, 124 coins",
+  "intro": "Before any bot went on paper trading, its rules were replayed on three years of past prices. This page shows that research: what worked, what only looked like it worked, and everything that failed. Backtests are easy to flatter, so the limits are listed as prominently as the results. Live paper results are on the main page.",
+  "why_two": "Why show two sets of numbers? A backtest has thousands of trades, so it is statistically strong, but the rules were shaped by people who had already seen the data. Live paper trading has only a few trades so far, but nobody has seen the future, so it is the honest test. Each answers the other's weakness. Where they agree, confidence grows. Where they disagree, that is the interesting part, and feedback on it is welcome.",
+  "setup": [
+    ["Period", "1 Oct 2023 to 28 Sep 2026. Split into Y1 (Oct 2023 to Sep 2024), Y2 (Oct 2024 to Sep 2025) and Y3 (Oct 2025 to Sep 2026). A rule is only trusted if it holds in all three years."],
+    ["Coins", "124 USDT perpetual futures coins (top Binance volume, also tradable on the target exchange). 74 have the full 3 years, the rest start at their listing date. Results on the 79 newer coins were close to the 45 older ones, so the coin list is not what drives the results."],
+    ["Candles", "1-hour and 5-minute candles. 4-hour and daily charts are built from the 1-hour ones. Exits are walked candle by candle, and when a candle touches both stop and target, the stop is assumed to hit first (the pessimistic choice)."],
+    ["Costs", "0.059% taker fee per side plus 0.05% slippage on every market fill. Slippage is the gap between the price you expect and the price you get."],
+    ["Rules", "Each bot's rules are copied from its live strategy file, then tested without changes."],
+    ["Slots", "A bot can hold at most 10 trades at once, filled first come, first served, as the live bot would. Results with no slot limit are labelled as such."],
+    ["Engine check", "On the 45 older coins over the last 12 months, Breakout 4h gave +0.150R in this engine and +0.16R in an earlier test on another exchange's data. The two engines agree."]
+  ],
+  "concepts": [
+    ["R multiple", "Result divided by the amount risked (the distance to the stop). +1R means the trade made what it risked. Using R makes trades of different sizes comparable."],
+    ["Random-entry control", "Over these 3 years most altcoins fell, so random shorts made about +0.10R per trade and random longs about -0.07R. A rule only has an edge if it beats random entries on the same side with the same exits."],
+    ["In-sample vs unseen", "In-sample data is what a rule was designed on. Unseen (out-of-sample) data was held back. A rule that only works in-sample is probably overfitted, meaning it memorised noise."],
+    ["Market mood", "A daily filter. Weak: fewer than 35% of coins above their 20-day average price (EMA20) and BTC below its own. Hot: more than 65% above and BTC above."],
+    ["Drawdown", "The biggest fall from a previous peak of the equity curve. In R terms it says how deep the worst stretch was."],
+    ["Compounding", "Risking a % of the current account, so size grows after wins. It multiplies gains, and also the size of the worst drop."]
+  ],
+  "sections": [
+    {
+      "id": "bt-breakout4h",
+      "bot_id": "breakout4h",
+      "title": "Breakout 4h",
+      "status": "on paper since 17 Oct 2026",
+      "summary": "Enters when price breaks a 20-candle high or low on the 4-hour chart, long and short. It skips every trade when the market mood is weak, and skips longs when the mood is hot. Fixed target at 6R, 10-day time limit. This is the only bot that was above zero over the full 3 years.",
+      "tables": [
+        {
+          "caption": "1. Does the market mood filter help? Breakout 4h per trade, by mood (trades in brackets)",
+          "head": ["Side", "Weak", "Neutral", "Hot"],
+          "rows": [
+            ["Longs", "-0.006R (641)", "+0.381R (1,330)", "-0.166R (3,327)"],
+            ["Shorts", "-0.072R (4,562)", "+0.290R (2,397)", "+0.489R (598)"]
+          ],
+          "note": "Each cell has the same sign in all three years. Longs lose when the market is already hot, shorts lose when it is already weak: by then the move is late."
+        },
+        {
+          "caption": "2. First version of the filter (no longs in a hot market, no shorts in a weak market), no slot limit",
+          "head": ["Rules", "Trades", "Per trade", "Total", "Months up", "Worst drawdown", "Y1 / Y2 / Y3"],
+          "rows": [
+            ["No filter", "12,855", "+0.048R", "+611R", "16 of 35", "-629R", "+0.048 / -0.013 / +0.102"],
+            ["With filter", "4,966", "+0.300R", "+1,491R", "22 of 35", "-234R", "+0.272 / +0.206 / +0.419"]
+          ],
+          "note": "Stable for thresholds from 25/75 to 40/60 (+0.25R to +0.30R). The current live version also skips shorts in weak markets entirely."
+        },
+        {
+          "caption": "3. Exit test with the current entry rules, 10 slots, total R per year",
+          "head": ["Exit", "Y1", "Y2", "Y3 (unseen)", "Max drawdown", "Worst month"],
+          "rows": [
+            ["Trailing stop (3 ATR), 10 days", "+93R", "+87R", "+160R", "-54R", "-43R"],
+            ["Fixed 6R target, 10 days (used now)", "+134R", "+138R", "+190R", "-48R", "-31R"],
+            ["Trail 3 ATR only after +2R", "+66R", "+109R", "+188R", "-38R", "-24R"],
+            ["Trail 4 ATR", "+116R", "+85R", "+133R", "-53R", "-40R"],
+            ["Fixed 2R target", "+106R", "+154R", "+126R", "-41R", "-22R"]
+          ],
+          "note": "The 6R target was picked on Y1 and Y2, then held up on Y3: about 30% more R and a smaller drawdown. Per trade without slots: trailing +0.30 / +0.23 / +0.51R versus 6R target +0.49 / +0.36 / +0.52R. ATR is the average candle range, used to scale stops to each coin's volatility. A trailing stop gives back too much on this entry, and taking profit early at 2R is worse in the unseen year."
+        },
+        {
+          "caption": "4. What compounding would have done (risk a fixed % of the current account per trade, 10 slots)",
+          "head": ["Risk per trade", "3 years", "Worst drop", "Last year only"],
+          "rows": [
+            ["0.5%", "x7", "-22%", "x2.1"],
+            ["1%", "x29", "-40%", "x3.2"],
+            ["2%", "x196", "-66%", "x5.0"],
+            ["3%", "x518", "-84%", "x5.5"],
+            ["5%", "x447", "-98%", "x3.2"],
+            ["8%", "wiped out", "-100%", ""]
+          ],
+          "note": "Read this as a warning, not a promise. The multipliers are paper numbers from rules found on the same 3 years, and the jump from 3% to 8% shows how fast oversized risk destroys an account."
+        }
+      ],
+      "caveats": [
+        "The market mood rule was found on these same 3 years, so it is in-sample. The stable thresholds help, but only forward testing can settle it.",
+        "A later test (30 Oct) on a rebuilt engine gave smaller totals (Y3 +104R instead of +190R for the same rules), with the same direction. Compare rows only within one table.",
+        "Moving the stop to break-even after +2R beat the plain rules in all three years in that later test, but the strict best settings did not beat the plain rules in Y3, so the evidence is moderate, not strong."
+      ]
+    },
+    {
+      "id": "bt-pullback4h",
+      "bot_id": "pullback4h",
+      "title": "Pullback 4h",
+      "status": "on paper since 17 Oct 2026",
+      "summary": "In a daily uptrend or downtrend, waits for the 4-hour price to dip back to its 20-period average (EMA20) and enters with a limit order. Uses the same market mood filter as Breakout 4h and a 4R target. It wins only about 3 trades in 10 and relies on big winners.",
+      "tables": [
+        {
+          "caption": "1. Six pullback ideas, same filter, per trade over 3 years (124 coins, no slot limit)",
+          "head": ["Idea", "Trades", "Win", "Y1", "Y2", "Y3"],
+          "rows": [
+            ["4h pullback to EMA20 in a daily trend, 6R target (this bot's family)", "8,318", "28%", "+0.269R", "+0.182R", "+0.377R"],
+            ["4h breakout, then retest, 6R", "2,965", "29%", "+0.542R", "+0.051R", "+0.491R"],
+            ["Same 4h pullback, 3R", "9,066", "31%", "+0.171R", "+0.059R", "+0.184R"],
+            ["1h pullback in a 4h trend, 3R", "19,714", "29%", "+0.078R", "+0.054R", "-0.031R"],
+            ["RSI(2) dip in a trend", "17,599", "60%", "-0.050R", "-0.024R", "-0.079R"],
+            ["Earlier 15m pullback bot (2R, 21 coins)", "4,517", "39%", "+0.068R", "+0.137R", "-0.014R"]
+          ],
+          "note": "Without the market filter the 1h pullback and the RSI idea lose, and the other two are much weaker, so the filter is what makes them work. Picking the best of six after seeing the table is selection bias (see limits)."
+        },
+        {
+          "caption": "2. Choosing the target: 4h pullback with filter, 10 slots, total R per year",
+          "head": ["Target", "Y1", "Y2", "Y3", "Max drawdown"],
+          "rows": [
+            ["2R", "+63R", "-27R", "+75R", "-103R"],
+            ["3R", "+27R", "-18R", "+91R", "-117R"],
+            ["4R (used now)", "+40R", "+37R", "+121R", "-117R"],
+            ["6R", "+96R", "-21R", "+110R", "-131R"]
+          ],
+          "note": "4R is the only target positive in every year, but it was chosen after seeing this table. The earlier 15m pullback bot made +33R over 3 years with 10 slots, so this family is about 6 times better, though with deep drawdowns."
+        }
+      ],
+      "caveats": [
+        "Drawdowns are deep for the profit (-117R). Compounding is not safe here: 6R at 2% risk per trade fell 95% at its worst.",
+        "Monthly results correlate 0.39 with Breakout 4h, so running both gives only partial diversification. Correlation measures how much two results move together: 1 is lockstep, 0 is independent.",
+        "Only 28% to 30% of trades win. Long losing runs are normal for this style."
+      ]
+    },
+    {
+      "id": "bt-gold",
+      "title": "Gold Breakout 4h (long only)",
+      "status": "backtest only, no paper trades yet",
+      "summary": "The same breakout idea on gold, longs only, 3R target. It is the only non-crypto idea that beat random entries, and it is not running on paper yet, so there is no live result to show.",
+      "tables": [
+        {
+          "caption": "Gold, Oct 2023 to Sep 2026 (hourly spot prices)",
+          "head": ["Rule (longs)", "Trades", "Win", "Per trade", "Beat random by", "Y1 / Y2 / Y3", "Total", "Worst drawdown"],
+          "rows": [
+            ["Breakout 4h, 3R target", "86", "44%", "+0.50R", "+0.14R", "+0.25 / +0.48 / +0.99", "+43R", "-12R"],
+            ["Breakout 4h, crypto rules (3 ATR trail)", "77", "53%", "+0.44R", "+0.17R", "+0.39 / +0.32 / +0.74", "+34R", "-9R"],
+            ["20-day (Turtle) breakout", "15", "47%", "+1.31R", "+0.58R", "all 3 positive", "+20R", "-2R"]
+          ],
+          "note": "The 20-day breakout has only 15 trades, far too few to trust."
+        }
+      ],
+      "caveats": [
+        "Gold roughly doubled over the test (about 2,060 to 4,700), so random longs also look good. That is why the column that matters is the edge over random: +0.14R.",
+        "Samples are small (15 to 90 trades per rule). Every intraday gold idea failed because fees and slippage eat 0.3R to 0.56R per trade on its tiny stops.",
+        "Oil breakout longs looked weaker still (+0.17R, 30% wins, one losing year) and silver did not beat random at all."
+      ]
+    }
+  ],
+  "failed_intro": "Every bot tested is listed, the ones that failed included. A strategy only counts as working if it is positive in all three years and beats random entries.",
+  "failed_table": {
+    "head": ["Strategy", "Y1", "Y2", "Y3", "Months up (of 36)", "Verdict"],
+    "rows": [
+      ["Scalper (short-term dips)", "-0.285R", "-0.257R", "-0.304R", "0", "Loses every year"],
+      ["Range Reversion", "-0.123R", "-0.141R", "-0.137R", "0", "Loses every year, no exit rescues it"],
+      ["Momentum Burst", "-0.066R", "-0.084R", "-0.113R", "9", "Loses every year"],
+      ["Breakout Retest", "-0.110R", "-0.089R", "-0.067R", "10", "Loses every year"],
+      ["Trend Pullback (15m)", "-0.020R", "-0.050R", "-0.065R", "16", "Small loss every year, worsening"],
+      ["Pump breakout", "-0.102R", "+0.022R", "+0.098R", "14", "One bad year, not robust"]
+    ]
+  },
+  "failed_bullets": [
+    "A shorts-only bot that trades when the whole market is weak: negative for every strategy tried (Breakout 4h shorts in weak markets -0.072R). By the time everything is weak, breakdowns are late and bounce.",
+    "Daily-chart swing bots (five entry types plus random entries): none positive in all three years. The best earned under 0.1R per trade and depended on the year.",
+    "New scalper designs (5-minute dips, 15-minute scalps, fading flush candles): all lose every year. Before fees the best had a tiny edge, but fees of roughly 0.05R to 0.1R per trade turned it negative.",
+    "A published futures dip idea adapted to crypto: -0.14% and -0.12% per trade (long and short), profitable in 0 of 36 months.",
+    "A public RSI and moving-average crossover bot: -3.02% per trade with its stated settings and worse than random entries.",
+    "Top strategies from a public backtest leaderboard, re-run with real prices and our costs: one claimed +19,973% and made -0.14% per trade, negative in every year. Their engine assumes the order of highs and lows inside a candle and compounds all equity, which flatters tight stops and large claims.",
+    "Turtle Momentum 4h: not featured. On 3,521 trades the top 1% of trades produced 97% of the profit, so it is too fragile to call a result, and every profit-protection variant tested (trailing stops, partial exits) was worse than doing nothing in every year."
+  ],
+  "limits": [
+    "In-sample risk: the market mood filter and the 6R exit were designed on this data. The exit was picked on Y1 and Y2 and judged on Y3, which is better than nothing, but Y3 was still part of the research.",
+    "Selection bias: the pullback family was picked from about six ideas and several targets, and these two bots from a larger set. The best of many tries always looks better than it is.",
+    "Trades are not independent: one market move can trigger dozens of similar trades. 12,855 trades is not 12,855 separate pieces of evidence.",
+    "A weak market for altcoins: three years of mostly falling altcoins is one market regime. Rising-market behaviour is under-tested.",
+    "Simulated fills: no order book depth, no latency, stop-first assumption. Live fills will be worse.",
+    "Forward test: live paper trading started on 17 Oct 2026, after the backtest data ends (28 Sep 2026). It is the first honest out-of-sample test, but it has few trades so far."
+  ],
+  "questions": [
+    "How would you test whether a market-mood filter like this is overfitted? Walk-forward testing, other coins, other years?",
+    "Is a 6R fixed target sensible for a breakout entry, or is something smarter worth the added risk of overfitting?",
+    "What would you check first in a backtest that finds its best result after trying six variants?"
+  ],
+  "files": "Engine code and the full research notes are kept private for now, since they were written alongside private trading setups. Every number on this page comes from those notes. If you want to check a specific number or the method, ask and I will explain how it was produced."
+}

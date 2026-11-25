@@ -10,6 +10,7 @@ Shared in public to get feedback from people who know more than I do.
 | Path | What it is |
 |---|---|
 | `build_results.py` | Reads Freqtrade trade databases and writes a static, read-only results page. Standard library only. |
+| `backtest_data.json` | Curated 3-year backtest research, rendered by the script into `backtest.html`. Numbers only, no strategy code. |
 | `results_config.example.json` | Template settings: which bots to show, start balances, notes. |
 | `publish.sh` | Nightly job for the server: builds the page, scans for secrets, pushes to `docs/`. |
 | `docs/` | The published results page (served by GitHub Pages). Written by the script, do not edit by hand. |

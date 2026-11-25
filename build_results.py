@@ -7,7 +7,7 @@ Standard library only (Python 3.8+). No network access, no trackers, no secrets.
 
 What it reads : the `trades` table of each bot's sqlite file (a private copy is
                 made first, so the live bot is never touched).
-What it writes: <out>/index.html, <out>/results.json, <out>/trades_<bot>.csv
+What it writes: <out>/index.html, <out>/backtest.html (from backtest_data.json), <out>/results.json, <out>/trades_<bot>.csv
 
 Usage:
     python3 build_results.py --config results_config.json --out site
@@ -451,6 +451,9 @@ def build_page(cfg, bots_data, generated):
     parts.append("<h1>%s</h1>" % esc(title))
     if cfg.get("tagline"):
         parts.append('<p class="muted">%s</p>' % esc(cfg["tagline"]))
+    if cfg.get("_has_backtest"):
+        parts.append('<p><a href="backtest.html"><strong>Backtest research: 3 years, 124 coins</strong></a> '
+                     '<span class="muted small">(what the rules did on past data, and everything that failed)</span></p>')
     if cfg.get("demo"):
         parts.append('<div class="banner demo">DEMO DATA: randomly generated test numbers. These are NOT real results. '
                      'This preview only shows the page layout.</div>')
@@ -499,6 +502,92 @@ def build_page(cfg, bots_data, generated):
                      ("<p>%s</p>" % link_html) if link_html else "", esc(generated)))
     parts.append("</main></body></html>")
     return "".join(parts)
+
+
+# ----------------------------------------------------------------------------
+# Backtest research page (curated content kept in backtest_data.json)
+# ----------------------------------------------------------------------------
+
+def _table(head, rows, text_cols=()):
+    th = "".join("<th%s>%s</th>" % ("" if i == 0 or i in text_cols else " class='r'", esc(h)) for i, h in enumerate(head))
+    body = []
+    for row in rows:
+        tds = "".join("<td%s>%s</td>" % ("" if i == 0 or i in text_cols else " class='r'", esc(c)) for i, c in enumerate(row))
+        body.append("<tr>%s</tr>" % tds)
+    return "<div class='scroll'><table><tr>%s</tr>%s</table></div>" % (th, "".join(body))
+
+
+def _live_line(bot_id, bots_data):
+    for bot, s, open_count, trades, err in bots_data:
+        if bot["_id"] != bot_id:
+            continue
+        if err or not s or s.get("n", 0) == 0:
+            return "Live paper so far: no closed trades yet."
+        r = ("%s R per trade" % num(s["mean_r"], 2, sign=True)) if s.get("mean_r") is not None else "R not available"
+        return ("Live paper so far (since %s): %d closed trades, win rate %s, %s on the stake, %s. %s" % (
+            bot.get("since", "start"), s["n"], pct(s["win_rate"], 0, sign=False), pct(s["mean_ret"]), r,
+            "Too few trades to judge." if s["n"] < s["min_trades"] else "See the live page for the range."))
+    return None
+
+
+def build_backtest_page(data, cfg, bots_data, generated):
+    title = data.get("title", "Backtest research")
+    site = cfg.get("site_title", "Bot results")
+    p = ['<!doctype html><html lang="en"><head><meta charset="utf-8">'
+         '<meta name="viewport" content="width=device-width,initial-scale=1">'
+         '<title>%s | %s</title><meta name="robots" content="index,follow"><style>%s</style></head><body><main>' % (
+             esc(title), esc(site), CSS)]
+    p.append('<p class="small"><a href="index.html">&larr; Live paper results</a></p>')
+    p.append("<h1>%s</h1>" % esc(title))
+    p.append("<p>%s</p>" % esc(data.get("intro", "")))
+    p.append('<div class="banner">%s</div>' % esc(cfg.get("disclaimer", DEFAULT_DISCLAIMER)))
+    if data.get("why_two"):
+        p.append('<div class="card"><strong>Backtest and live, side by side</strong><p>%s</p></div>' % esc(data["why_two"]))
+
+    nav = " | ".join('<a href="#%s">%s</a>' % (esc(sec["id"]), esc(sec["title"])) for sec in data.get("sections", []))
+    nav += " | <a href='#failed'>What failed</a> | <a href='#limits'>Limits</a>"
+    p.append('<p class="small">Jump to: %s</p>' % nav)
+
+    p.append("<h2>How the tests were run</h2><div class='card scroll'><table>%s</table></div>" % "".join(
+        "<tr><td class='wrap'><strong>%s</strong></td><td class='wrap'>%s</td></tr>" % (esc(a), esc(b))
+        for a, b in data.get("setup", [])))
+    p.append("<details><summary>Terms used on this page</summary><dl>%s</dl></details>" % "".join(
+        "<dt><strong>%s</strong></dt><dd>%s</dd>" % (esc(a), esc(b)) for a, b in data.get("concepts", [])))
+
+    for sec in data.get("sections", []):
+        p.append('<section id="%s" class="card"><h2>%s <span class="badge">%s</span></h2><p>%s</p>' % (
+            esc(sec["id"]), esc(sec["title"]), esc(sec.get("status", "")), esc(sec.get("summary", ""))))
+        live = _live_line(sec["bot_id"], bots_data) if sec.get("bot_id") else None
+        if live:
+            p.append('<p class="banner">%s <a href="index.html#%s">Open live results</a></p>' % (esc(live), esc(sec["bot_id"])))
+        for t in sec.get("tables", []):
+            p.append("<h3>%s</h3>%s" % (esc(t["caption"]), _table(t["head"], t["rows"], t.get("text_cols", ()))))
+            if t.get("note"):
+                p.append('<p class="small muted">%s</p>' % esc(t["note"]))
+        if sec.get("caveats"):
+            p.append("<h3>Caveats for this bot</h3><ul>%s</ul>" % "".join("<li>%s</li>" % esc(c) for c in sec["caveats"]))
+        p.append("</section>")
+
+    ft = data.get("failed_table")
+    p.append('<h2 id="failed">What failed</h2><p>%s</p>' % esc(data.get("failed_intro", "")))
+    if ft:
+        p.append("<div class='card'>%s</div>" % _table(ft["head"], ft["rows"], text_cols=(len(ft["head"]) - 1,)))
+    if data.get("failed_bullets"):
+        p.append("<ul>%s</ul>" % "".join("<li>%s</li>" % esc(b) for b in data["failed_bullets"]))
+
+    p.append('<h2 id="limits">Limits of this research</h2><ul>%s</ul>' % "".join("<li>%s</li>" % esc(x) for x in data.get("limits", [])))
+    if data.get("questions"):
+        p.append('<div class="card"><strong>Where feedback helps most</strong><ul>%s</ul></div>' % "".join(
+            "<li>%s</li>" % esc(q) for q in data["questions"]))
+    if data.get("files"):
+        p.append('<p class="small muted">%s</p>' % esc(data["files"]))
+
+    links = cfg.get("links") or {}
+    link_html = " | ".join('<a href="%s" rel="noopener">%s</a>' % (esc(v), esc(k)) for k, v in links.items() if v)
+    p.append("<footer>%s<p>Generated %s UTC. This page is static: it contains no login and no connection to any trading account.</p></footer>" % (
+        ("<p>%s</p>" % link_html) if link_html else "", esc(generated)))
+    p.append("</main></body></html>")
+    return "".join(p)
 
 
 # ----------------------------------------------------------------------------
@@ -565,6 +654,11 @@ def main():
             bots_data.append((bot, None, 0, [], "Data not available for this bot right now."))
 
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    bt_file = Path(__file__).resolve().parent / "backtest_data.json"
+    if bt_file.exists():
+        bt = json.loads(bt_file.read_text(encoding="utf-8"))
+        cfg["_has_backtest"] = True
+        (out_dir / "backtest.html").write_text(build_backtest_page(bt, cfg, bots_data, generated), encoding="utf-8")
     (out_dir / "index.html").write_text(build_page(cfg, bots_data, generated), encoding="utf-8")
     (out_dir / "results.json").write_text(json.dumps(
         {"generated_utc": generated, "demo": bool(cfg.get("demo")), "bots": results}, indent=2, default=str), encoding="utf-8")
